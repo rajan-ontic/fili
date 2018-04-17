@@ -8,7 +8,9 @@ pull request if there was one.
 
 
 ### Changed:
-
+- [Removed deprecations](https://github.com/yahoo/fili/issues/668)
+  * Removed Pagination deprecation
+  * Removed `DataSourceConstraint` deprecation
 
 
 ### Deprecated:
@@ -24,6 +26,17 @@ pull request if there was one.
 
 
 ### Removed:
+
+- [Removed older deprecated code](https://github.com/yahoo/fili/issues/668)
+    * Removed constructos and getters with clean replacements
+    * Stripped the remaining UI/NonUI code
+    * Cleaned up old schema classes and methods
+    * Removed orphaned metadata response data factory
+    * Removed pre-theta sketch code
+    * Removed deprecated min/max aggregations
+    * Removed loader code for metrics that don't include dimension dictionary
+    * Removed `KeyValueStoreDimension`
+
 
 Current
 -------
