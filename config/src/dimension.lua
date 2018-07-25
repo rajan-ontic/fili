@@ -1,5 +1,25 @@
 -- Copyright 2018 Yahoo Inc.
 -- Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
+--[[
+This is where we define dimensions to be used in Fili. Dimensions provide a 
+means of attaching context to metrics. They may be used to slice and dice
+metrics. For example, with dimensions we don't just know how many "pageViews"
+our website has had. We can also partition "pageViews" into the number of men
+who've seen our pages, the number of women, and the number of people whose
+gender is unknown.
+
+Dimensions are defined in a table DIMENSIONS that maps dimension names to 
+a list of top-level information about that dimension:
+    {longName, description, fields, categories}
+
+    * longName - A longer human friendly name for the dimension
+    * description - Brief documentation about the dimension
+    * fields - A fieldset (see FieldSets below) describing the fields attached
+        to the dimension
+    * categories - An arbitrary category to put the dimension in. This is not
+        used directly by Fili, but rather exists as a marker for UI's should
+        they desire to use it to organize dimensions.
+]]
 
 local parser = require("utils.jsonParser")
 local dimension_utils = require("utils.dimensionUtils")
@@ -18,6 +38,33 @@ DEFAULT = {
 
 -------------------------------------------------------------------------------
 -- FieldSets
+--[[
+    Fields define a dimension's "metadata." For example, the country dimension
+    may have the fields id, name, desc, and ISO. id is a unique identifier for
+    the country (typically this is the primary key in your dimension database),
+    name is a human readable name of the country, desc is a brief description
+    of the country, and ISO is the country' ISO code.
+
+    Fieldsets are lists of fields that may be attached to dimensions.
+
+    A field is a table with at least one parameter: 
+        1. name - The name of the field
+    Fields may also have the optional parameter:
+        1. tags - A list of tags that may provide additional information about
+            a field. For example, the "primaryKey" tag is used to mark a field
+            as the dimension's primary key.
+
+    To aid in configuration, we provide two utility functions for creating 
+    fields:
+        1. pk - Takes a name and returns a primary key field (i.e. a table with
+            two keys:
+                a. name - The name of the field
+                b. tags - A singleton list containing the value "primaryKey"
+        2. field - A function that takes a variable number of field names and
+                returns an equal number of fields. Each field is a table with
+                one key:
+                a. name - The name passed in for that field
+]]
 -------------------------------------------------------------------------------
 
 -- fieldSet name = {pk(field as primary key), f(other fields)}
