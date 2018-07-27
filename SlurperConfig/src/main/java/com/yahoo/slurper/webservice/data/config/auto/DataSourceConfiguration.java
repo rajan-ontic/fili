@@ -56,7 +56,7 @@ public interface DataSourceConfiguration {
     TimeGrain getValidTimeGrain();
 
     /**
-     * Gets a list of {@link io.druid.timeline.DataSegment data segments} for a datasource in Druid.
+     * Gets a list of {@link DataSegment data segments} for a datasource in Druid.
      *
      * @return the list of data segments reported by druid.
      */

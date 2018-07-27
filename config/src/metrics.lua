@@ -153,7 +153,14 @@ M.metrics = metrics_utils.generate_metrics(
         MinusAddedDelta = {nil, nil, maker_dict.arithmeticMINUS, {"added", "delta"}},
         cardOnPage = {nil, nil, maker_dict.cardinalbyRow, {"page"}},
         bigThetaSketch = {nil, nil, maker_dict.ThetaSketchBig, {"page"}},
-        inlineMakerMetric = {nil, nil, {DEFAULT.CLAkjkSS_BASE_PATH .. "ThetaSketchMaker", {sketchSize = "4096"}}, {"page"}}
+        inlineMakerMetric = {nil, nil, {DEFAULT.CLASS_BASE_PATH .. "ThetaSketchMaker", {sketchSize = "4096"}}, {"page"}},
+        COM = {nil, nil, maker_dict.doubleSum, {"CO"}},
+        NO2M = {nil, nil, maker_dict.doubleSum, {"NO2"}},
+        O3M = {nil, nil, maker_dict.doubleSum, {"O3"}},
+        Temp = {nil, nil, maker_dict.doubleSum, {"Temp"}},
+        relativeHumidity = {nil, nil, maker_dict.doubleSum, {"relativeHumidity"}},
+        absoluteHumidity = {nil, nil, maker_dict.doubleSum, {"absoluteHumidity"}},
+        averageCOPerDay = {nil, nil, maker_dict.aggregateAveragebyDay, {"COM"} }
     }
 )
 
@@ -161,6 +168,6 @@ metrics_utils.add_makers(metrics_utils.cache_makers, maker_dict)
 metrics_utils.clean_cache_makers()
 
 metrics_utils.insert_makers_into_table(maker_dict, M.makers)
-parser.save("../MetricConfig.json", M)
+parser.save("../external/MetricConfig.json", M)
 
 return M

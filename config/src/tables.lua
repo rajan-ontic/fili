@@ -52,7 +52,8 @@ DEFAULT = {
 
 -- table name = {description, metrics, dimensions, granuality}
 PHYSICALTABLES = {
-    wikiticker = {nil, {"added", "delta", "deleted"}, DEFAULT.ALL_DIM, "HOUR"}
+    wikiticker = {nil, {"added", "delta", "deleted"}, DEFAULT.WIKI_DIM, "HOUR" },
+    air = {nil, {"CO", "NO2", "Temp", "relativeHumidity", "absoluteHumidity", "O3"}, DEFAULT.AIR_DIM, "HOUR" }
 }
 
 -------------------------------------------------------------------------------
@@ -61,11 +62,12 @@ PHYSICALTABLES = {
 
 -- table name = {description, metrics, dimensions, granuality, physicaltable}
 LOGICALTABLES = {
-    WIKIPEDIA = {nil, {"count", "added", "delta", "deleted"}, DEFAULT.ALL_DIM, {"ALL", "HOUR", "DAY"}, {"wikiticker"}},
-    logicalTableTesterOne = {nil, DEFAULT.ALL_METRICS, DEFAULT.ALL_DIM, {"ALL", "HOUR", "DAY"}, {"wikiticker"}}
+    WIKIPEDIA = {nil, {"count", "added", "delta", "deleted"}, DEFAULT.WIKI_DIM, {"ALL", "HOUR", "DAY"}, {"wikiticker"}},
+    logicalTableTesterOne = {nil, DEFAULT.ALL_METRICS, DEFAULT.WIKI_DIM, {"ALL", "HOUR", "DAY"}, {"wikiticker"}},
+    air_logical = {nil, {"Temp", "relativeHumidity", "absoluteHumidity", "averageCOPerDay","O3M"}, DEFAULT.AIR_DIM, {"ALL", "HOUR", "DAY"}, {"air"}}
 }
 
 table_utils.add_phy_tables(PHYSICALTABLES, M.physicalTables)
 table_utils.add_log_tables(LOGICALTABLES, M.logicalTables)
 
-parser.save("../TableConfig.json", M)
+parser.save("../external/TableConfig.json", M)
