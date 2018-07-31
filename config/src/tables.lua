@@ -62,9 +62,8 @@ PHYSICALTABLES = {
 
 -- table name = {description, metrics, dimensions, granuality, physicaltable}
 LOGICALTABLES = {
-    WIKIPEDIA = {nil, {"count", "added", "delta", "deleted"}, DEFAULT.WIKI_DIM, {"ALL", "HOUR", "DAY"}, {"wikiticker"}},
-    logicalTableTesterOne = {nil, DEFAULT.ALL_METRICS, DEFAULT.WIKI_DIM, {"ALL", "HOUR", "DAY"}, {"wikiticker"}},
-    air_logical = {nil, {"Temp", "relativeHumidity", "absoluteHumidity", "averageCOPerDay","O3M"}, DEFAULT.AIR_DIM, {"ALL", "HOUR", "DAY"}, {"air"}}
+    WIKIPEDIA = {nil, DEFAULT.ALL_METRICS, DEFAULT.WIKI_DIM, {"ALL", "HOUR", "DAY"}, {"wikiticker"}},
+    air_quality = {nil, {"Temp", "relativeHumidity", "absoluteHumidity", "averageCOPerDay", "O3M"}, DEFAULT.AIR_DIM, {"ALL", "HOUR", "DAY"}, {"air"}}
 }
 
 table_utils.add_phy_tables(PHYSICALTABLES, M.physicalTables)

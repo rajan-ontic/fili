@@ -7,6 +7,7 @@ import com.yahoo.bard.webservice.data.config.metric.makers.MetricMaker;
 import com.yahoo.bard.webservice.data.dimension.DimensionDictionary;
 import com.yahoo.bard.webservice.data.metric.MetricDictionary;
 
+import com.yahoo.bard.webservice.data.time.DefaultTimeGrain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.DefaultParameterNameDiscoverer;
@@ -33,6 +34,13 @@ public class MetricMakerDictionary {
 
     private MetricDictionary metricDictionary;
     private DimensionDictionary dimensionDictionary;
+
+    /**
+     * Constructor.
+     */
+    public MetricMakerDictionary() {
+        this.nameToMetricMaker = new LinkedHashMap<>();
+    }
 
     /**
      * Constructor, initial map from all maker names to maker instances in dictionary.
@@ -196,16 +204,19 @@ public class MetricMakerDictionary {
         return selectedConstructor;
     }
 
-
     /**
      * Parse parameters for maker's constructor based on parameter's name and type.
      *
      * @param paramType type of the parameter in maker's constructor
      * @param paramName name of the parameter in maker's constructor
-     * @param maker     the maker template used to find parameter's value by name
+     * @param maker the maker template used to find parameter's value by name
      * @return the value of parameter (can be any type)
+     *
+     * Todo: Not a good implementation now but can work, use other strategy such as binding map instead
      */
     private Object parseParams(Class<?> paramType, String paramName, MetricMakerTemplate maker) {
+
+        Object param = maker.getParams().get(paramName);
 
         if ("MetricDictionary".equals(paramType.getSimpleName())) {
             return metricDictionary;
@@ -213,8 +224,9 @@ public class MetricMakerDictionary {
         if ("DimensionDictionary".equals(paramType.getSimpleName())) {
             return dimensionDictionary;
         }
-
-        Object param = maker.getParams().get(paramName);
+        if ("ZonelessTimeGrain".equals(paramType.getSimpleName())) {
+            return DefaultTimeGrain.valueOf((String) param);
+        }
 
         if (paramType.isInstance(param)) {
             return param;
