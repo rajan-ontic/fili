@@ -36,7 +36,7 @@ class SlicesServletSpec extends Specification {
     def "The slices are correctly configured, and the slices endpoint returns the appropriate metadata"() {
         setup:
         String sliceNameOne = "wikiticker"
-        String sliceNameTwo = "physicaltabletester"
+        String sliceNameTwo = "physicalTableTester"
         String expectedResponse = """{
             "rows":
             [
@@ -163,7 +163,7 @@ class SlicesServletSpec extends Specification {
                 " isMinor, namespace, channel, countryName, regionName, metroCode, cityName").split(',').collect { it.trim()}
         metricNamesOne = "added, delta, deleted".split(',').collect {it.trim()}
 
-        sliceNameTwo = "physicaltabletester"
+        sliceNameTwo = "physicalTableTester"
         granularityTwo = "hour"
         dimensionNamesTwo = ("comment, countryIsoCode").split(',').collect { it.trim()}
         metricNamesTwo = "count, added".split(',').collect {it.trim()}

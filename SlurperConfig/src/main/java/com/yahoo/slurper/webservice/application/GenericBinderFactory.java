@@ -66,7 +66,6 @@ public class GenericBinderFactory extends AbstractBinderFactory {
     @Override
     protected TableLoader getTableLoader() {
         TableSerializer tableSerializer = new TableSerializer(new ObjectMapper());
-
         tableSerializer
                 .setDimensions(dimensionSerializer)
                 .setMetrics(metricSerializer)
@@ -85,7 +84,6 @@ public class GenericBinderFactory extends AbstractBinderFactory {
     @Override
     protected MetricLoader getMetricLoader() {
         metricSerializer = new MetricSerializer(new ObjectMapper());
-
         metricSerializer
                 .setConfig(configLoader)
                 .setPath(DRUID_CONFIG_FILE_PATH)

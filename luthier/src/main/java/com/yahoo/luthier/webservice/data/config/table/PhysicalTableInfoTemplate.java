@@ -3,9 +3,12 @@
 package com.yahoo.luthier.webservice.data.config.table;
 
 
+import com.yahoo.bard.webservice.data.config.dimension.DimensionConfig;
+import com.yahoo.bard.webservice.data.config.table.PhysicalTableDefinition;
 import com.yahoo.bard.webservice.data.time.DefaultTimeGrain;
 
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Physical Table Info Template.
@@ -31,14 +34,14 @@ public interface PhysicalTableInfoTemplate {
      *
      * @return physical table's metrics
      */
-    List<String> getMetrics();
+    Set<String> getMetrics();
 
     /**
      * Get physical table's dimensions.
      *
      * @return physical table's dimensions
      */
-    List<String> getDimensions();
+    Set<String> getDimensions();
 
     /**
      * Get physical table's granularity.
@@ -46,4 +49,12 @@ public interface PhysicalTableInfoTemplate {
      * @return physical table's granularity
      */
     DefaultTimeGrain getGranularity();
+
+    /**
+     * Build a physical table definition based on this table's dimensions and metrics.
+     *
+     * @param dimensionsMap a map from dimension name to dimension config
+     * @return a physicalTableDefinition instance
+     */
+    PhysicalTableDefinition build(Map<String, DimensionConfig> dimensionsMap);
 }

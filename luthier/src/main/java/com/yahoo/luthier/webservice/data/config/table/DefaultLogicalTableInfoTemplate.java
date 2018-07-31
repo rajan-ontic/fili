@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.validation.constraints.NotNull;
+
+import com.google.common.collect.ImmutableSet;
 import com.yahoo.bard.webservice.data.time.AllGranularity;
 import com.yahoo.bard.webservice.data.time.DefaultTimeGrain;
 import com.yahoo.bard.webservice.data.time.Granularity;
@@ -37,8 +39,8 @@ public class DefaultLogicalTableInfoTemplate implements LogicalTableInfoTemplate
 
     private final String name;
     private final String description;
-    private final List<String> apiMetrics;
-    private final List<String> physicalTables;
+    private final Set<String> apiMetrics;
+    private final Set<String> physicalTables;
     private final Set<Granularity> granularities;
 
     /**
@@ -54,23 +56,21 @@ public class DefaultLogicalTableInfoTemplate implements LogicalTableInfoTemplate
     public DefaultLogicalTableInfoTemplate(
             @NotNull @JsonProperty("name") String name,
             @JsonProperty("description") String description,
-            @JsonProperty("apiMetricNames") List<String> apiMetrics,
-            @JsonProperty("physicalTables") List<String> physicalTables,
-            @JsonProperty("granularity") List<String> granularities
+            @JsonProperty("apiMetricNames") Set<String> apiMetrics,
+            @JsonProperty("physicalTables") Set<String> physicalTables,
+            @JsonProperty("granularity") Set<String> granularities
     ) {
         this.name = EnumUtils.camelCase(name);
         this.description = (Objects.isNull(description) ? "" : description);
         this.apiMetrics = Objects.isNull(apiMetrics) ?
-                Collections.emptyList() : apiMetrics;
+                Collections.emptySet() : ImmutableSet.copyOf(apiMetrics);
         this.physicalTables = (Objects.isNull(physicalTables) ?
-                Collections.emptyList() : physicalTables.stream()
-                .map(EnumUtils::camelCase)
-                .collect(Collectors.toList()));
+                Collections.emptySet() : ImmutableSet.copyOf(physicalTables));
         this.granularities = granularities.stream()
                 .map(granularity ->
                         "ALL".equals(granularity) ?
                                 AllGranularity.INSTANCE : DefaultTimeGrain.valueOf(granularity))
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -84,12 +84,12 @@ public class DefaultLogicalTableInfoTemplate implements LogicalTableInfoTemplate
     }
 
     @Override
-    public List<String> getApiMetrics() {
+    public Set<String> getApiMetrics() {
         return this.apiMetrics;
     }
 
     @Override
-    public List<String> getPhysicalTables() {
+    public Set<String> getPhysicalTables() {
         return this.physicalTables;
     }
 

@@ -10,14 +10,12 @@ import com.yahoo.bard.webservice.data.config.names.ApiMetricName;
 import com.yahoo.bard.webservice.data.config.names.FieldName;
 import com.yahoo.bard.webservice.data.config.names.TableName;
 import com.yahoo.bard.webservice.data.config.table.BaseTableLoader;
-import com.yahoo.bard.webservice.data.config.table.ConcretePhysicalTableDefinition;
 import com.yahoo.bard.webservice.data.config.table.PhysicalTableDefinition;
 import com.yahoo.bard.webservice.data.time.Granularity;
 import com.yahoo.bard.webservice.metadata.DataSourceMetadataService;
 import com.yahoo.bard.webservice.table.TableGroup;
 import com.yahoo.luthier.webservice.data.config.ExternalConfigLoader;
 import com.yahoo.luthier.webservice.data.config.dimension.ExternalDimensionsLoader;
-import org.joda.time.DateTimeZone;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,7 +38,8 @@ public class ExternalTableLoader extends BaseTableLoader {
     private final Map<TableName, Set<PhysicalTableDefinition>> tableDefinitions =
             new HashMap<>();
 
-    private final Map<String, PhysicalTableInfoTemplate> physicalTableDictionary = new HashMap<>();
+    private final Map<String, PhysicalTableDefinition> physicalTableMap = new HashMap<>();
+    private final Map<String, Set<FieldName>> physicalTableToMetricsMap = new HashMap<>();
 
     private ExternalConfigLoader tableConfigLoader;
     private String externalConfigFilePath;
@@ -73,25 +72,23 @@ public class ExternalTableLoader extends BaseTableLoader {
      * @param physicalTables   a set of physical tables
      * @param logicalTables    a set of logical tables
      */
-    private void configureSample(Set<PhysicalTableInfoTemplate> physicalTables,
+    private void configureTables(Set<PhysicalTableInfoTemplate> physicalTables,
                                  Set<LogicalTableInfoTemplate> logicalTables
     ) {
 
         // Map from dimension name to dimension configuration
-        Map<String, DimensionConfig> dimensions = externalDimensionsLoader.getDimensionConfigurations();
+        Map<String, DimensionConfig> dimensionsMap = externalDimensionsLoader.getDimensionConfigurations();
 
-        // Map from physical table's name to physical table
-        physicalTables.forEach(physicalTable ->
-                physicalTableDictionary.put(physicalTable.getName(), physicalTable)
-        );
+        physicalTables.forEach(physicalTable -> {
+            physicalTableMap.put(physicalTable.getName(), physicalTable.build(dimensionsMap));
+            physicalTableToMetricsMap.put(
+                    physicalTable.getName(),
+                    physicalTable.getMetrics()
+                            .stream().map(metric -> (FieldName) () -> (metric))
+                            .collect(Collectors.toSet()));
+        });
 
-        // For each logical table:
-        // - Update tableDefinitions (logicalTable to physical table group)
-        // - Update validGrains (logicalTable to all possible Granularities)
-        // - Update apiMetricNames (logicalTable to apiMetrics)
-        // - Update druidMetricNames (logicalTable to druidMetrics)
         logicalTables.forEach(logicalTable -> {
-
             Set<FieldName> druidMetrics = new HashSet<>();
             Set<PhysicalTableDefinition> physicalTableDefinition = new HashSet<>();
 
@@ -102,57 +99,15 @@ public class ExternalTableLoader extends BaseTableLoader {
 
             TableName logicalTableName = TableName.of(logicalTable.getName());
 
-            // For each physical table that this logical table depends on:
-            // - Add physicalMetrics to druidMetrics
-            // - Make samplePhysicalTableDefinition
-            // (From physical table's name, ZonedTimeGrain, physicalMetrics and dimensions)
             logicalTable.getPhysicalTables().forEach(physicalTableName -> {
-
-                // Get physical table through physical table's name
-                PhysicalTableInfoTemplate physicalTable = physicalTableDictionary
-                        .get(physicalTableName);
-
-                // Metrics for this physical table
-                Set<FieldName> physicalMetrics = physicalTable
-                        .getMetrics()
-                        .stream()
-                        .map(ApiMetricName::of)
-                        .collect(Collectors.toSet());
-
-                // Dimensions for this physical table
-                Set<DimensionConfig> dimensionSet = physicalTable
-                        .getDimensions().stream()
-                        .map(dimensions::get)
-                        .collect(Collectors.toSet());
-
-                // Make a sample physical table definition
-                physicalTableDefinition.add(
-                        new ConcretePhysicalTableDefinition(
-                                TableName.of(physicalTableName),
-                                physicalTable.getGranularity().buildZonedTimeGrain(DateTimeZone.UTC),
-                                physicalMetrics,
-                                dimensionSet
-                        )
-                );
-
-                // Add all physical metrics to druidMetrics
-                druidMetrics.addAll(physicalMetrics);
+                physicalTableDefinition.add(physicalTableMap.get(physicalTableName));
+                druidMetrics.addAll(physicalTableToMetricsMap.get(physicalTableName));
             });
 
-            // Update tableDefinitions and validGrains
             tableDefinitions.put(logicalTableName, physicalTableDefinition);
             validGrains.put(logicalTableName, logicalTable.getGranularities());
-
-            // Update apiMetricNames and druidMetricNames
-            apiMetricNames.put(
-                    logicalTableName,
-                    apiMetrics
-            );
-
-            druidMetricNames.put(
-                    logicalTableName,
-                    druidMetrics
-            );
+            apiMetricNames.put(logicalTableName, apiMetrics);
+            druidMetricNames.put(logicalTableName, druidMetrics);
         });
     }
 
@@ -186,7 +141,7 @@ public class ExternalTableLoader extends BaseTableLoader {
         Set<PhysicalTableInfoTemplate> physicalTables = tableConfig.getPhysicalTables();
         Set<LogicalTableInfoTemplate> logicalTables = tableConfig.getLogicalTables();
 
-        configureSample(physicalTables, logicalTables);
+        configureTables(physicalTables, logicalTables);
 
         logicalTables.forEach(table -> {
             TableName tableName = TableName.of(table.getName());

@@ -6,13 +6,19 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import com.google.common.collect.ImmutableSet;
+import com.yahoo.bard.webservice.data.config.dimension.DimensionConfig;
+import com.yahoo.bard.webservice.data.config.names.ApiMetricName;
+import com.yahoo.bard.webservice.data.config.names.FieldName;
+import com.yahoo.bard.webservice.data.config.names.TableName;
+import com.yahoo.bard.webservice.data.config.table.ConcretePhysicalTableDefinition;
+import com.yahoo.bard.webservice.data.config.table.PhysicalTableDefinition;
 import com.yahoo.bard.webservice.data.time.DefaultTimeGrain;
-import com.yahoo.bard.webservice.util.EnumUtils;
+import org.joda.time.DateTimeZone;
 
 import javax.validation.constraints.NotNull;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Wiki physical table information template.
@@ -39,8 +45,8 @@ public class DefaultPhysicalTableInfoTemplate implements PhysicalTableInfoTempla
 
     private final String name;
     private final String description;
-    private final List<String> metrics;
-    private final List<String> dimensions;
+    private final Set<String> metrics;
+    private final Set<String> dimensions;
     private final DefaultTimeGrain granularity;
 
     /**
@@ -56,15 +62,15 @@ public class DefaultPhysicalTableInfoTemplate implements PhysicalTableInfoTempla
     public DefaultPhysicalTableInfoTemplate(
             @NotNull @JsonProperty("name") String name,
             @JsonProperty("description") String description,
-            @JsonProperty("metrics") List<String> metrics,
-            @JsonProperty("dimensions") List<String> dimensions,
+            @JsonProperty("metrics") Set<String> metrics,
+            @JsonProperty("dimensions") Set<String> dimensions,
             @JsonProperty("granularity") String granularity
     ) {
-        this.name = EnumUtils.camelCase(name);
+        this.name = name;
         this.description = (Objects.isNull(description) ? "" : description);
-        this.metrics = !Objects.isNull(metrics) ?
-                metrics : Collections.emptyList();
-        this.dimensions = !Objects.isNull(dimensions) ? dimensions : Collections.emptyList();
+        this.metrics = Objects.isNull(metrics) ?
+                Collections.emptySet() : ImmutableSet.copyOf(metrics);
+        this.dimensions = Objects.isNull(dimensions) ? Collections.emptySet() : ImmutableSet.copyOf(dimensions);
         this.granularity = (Objects.isNull(granularity) ?
                 DefaultTimeGrain.HOUR : DefaultTimeGrain.valueOf(granularity));
     }
@@ -79,17 +85,38 @@ public class DefaultPhysicalTableInfoTemplate implements PhysicalTableInfoTempla
     }
 
     @Override
-    public List<String> getMetrics() {
+    public Set<String> getMetrics() {
         return this.metrics;
     }
 
     @Override
-    public List<String> getDimensions() {
+    public Set<String> getDimensions() {
         return this.dimensions;
     }
 
     @Override
     public DefaultTimeGrain getGranularity() {
         return this.granularity;
+    }
+
+    @Override
+    public PhysicalTableDefinition build(Map<String, DimensionConfig> dimensionsMap) {
+
+        // Metrics for this physical table
+        Set<FieldName> metricsSet = metrics.stream()
+                .map(ApiMetricName::of)
+                .collect(Collectors.toSet());
+
+        // Dimensions for this physical table
+        Set<DimensionConfig> dimensionsSet = dimensions.stream()
+                .map(dimensionsMap::get)
+                .collect(Collectors.toSet());
+
+        return new ConcretePhysicalTableDefinition(
+                TableName.of(name),
+                granularity.buildZonedTimeGrain(DateTimeZone.UTC),
+                metricsSet,
+                dimensionsSet
+        );
     }
 }

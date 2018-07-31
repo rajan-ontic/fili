@@ -21,12 +21,12 @@ public interface MetricMakerTemplate {
      *
      * @return maker's class
      */
-    String getClassPath();
+    String getFullyQualifiedClassName();
 
     /**
      * Get maker's parameters.
      *
      * @return maker's parameters
      */
-    Map<String, String> getParams();
+    Map<String, Object> getParams();
 }

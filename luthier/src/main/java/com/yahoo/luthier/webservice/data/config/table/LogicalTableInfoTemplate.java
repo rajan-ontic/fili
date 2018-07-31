@@ -4,7 +4,6 @@ package com.yahoo.luthier.webservice.data.config.table;
 
 import com.yahoo.bard.webservice.data.time.Granularity;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -31,14 +30,14 @@ public interface LogicalTableInfoTemplate {
      *
      * @return a set of apiMetrics
      */
-    List<String> getApiMetrics();
+    Set<String> getApiMetrics();
 
     /**
      * Get physical tables this logical table depends on.
      *
      * @return a set of physical tables' name
      */
-    List<String> getPhysicalTables();
+    Set<String> getPhysicalTables();
 
     /**
      * Get logical table's granularity.

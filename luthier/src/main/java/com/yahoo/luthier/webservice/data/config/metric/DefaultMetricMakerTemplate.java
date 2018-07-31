@@ -8,6 +8,7 @@ import com.google.common.collect.ImmutableMap;
 
 import javax.validation.constraints.NotNull;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -21,7 +22,7 @@ import java.util.Objects;
  *          "name": "bigThetaSketch",
  *          "class": "com.yahoo.bard.webservice.data.config.metric.makers.ThetaSketchMaker",
  *          "params": {
- *          "sketchSize": "4096"
+ *              "sketchSize": "4096"
  *          }
  *      }
  */
@@ -29,24 +30,25 @@ import java.util.Objects;
 public class DefaultMetricMakerTemplate implements MetricMakerTemplate {
 
     private final String name;
-    private final String classPath;
-    private final Map<String, String> parameters;
+    private final String fullyQualifiedClassName;
+    private final Map<String, Object> parameters;
 
     /**
      * Constructor used by json parser.
      *
      * @param name       json property name
-     * @param classPath  json property classPath
+     * @param fullyQualifiedClassName  json property class
      * @param parameters json property parameters
+     * Todo: change lua code to rename "classPath"
      */
     public DefaultMetricMakerTemplate(
             @NotNull @JsonProperty("name") String name,
-            @NotNull @JsonProperty("class") String classPath,
-            @JsonProperty("params") Map<String, String> parameters
+            @NotNull @JsonProperty("classPath") String fullyQualifiedClassName,
+            @JsonProperty("params") Map<String, Object> parameters
     ) {
         this.name = name;
-        this.classPath = classPath;
-        this.parameters = (Objects.isNull(parameters) ? null : ImmutableMap.copyOf(parameters));
+        this.fullyQualifiedClassName = fullyQualifiedClassName;
+        this.parameters = (Objects.isNull(parameters) ? new HashMap<>() : ImmutableMap.copyOf(parameters));
     }
 
     /**
@@ -65,8 +67,8 @@ public class DefaultMetricMakerTemplate implements MetricMakerTemplate {
      * @return maker's class
      */
     @Override
-    public String getClassPath() {
-        return this.classPath;
+    public String getFullyQualifiedClassName() {
+        return this.fullyQualifiedClassName;
     }
 
     /**
@@ -75,7 +77,7 @@ public class DefaultMetricMakerTemplate implements MetricMakerTemplate {
      * @return maker's parameters
      */
     @Override
-    public Map<String, String> getParams() {
+    public Map<String, Object> getParams() {
         return this.parameters;
     }
 }

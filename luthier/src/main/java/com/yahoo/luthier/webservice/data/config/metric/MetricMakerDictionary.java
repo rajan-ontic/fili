@@ -6,8 +6,6 @@ import com.google.inject.Singleton;
 import com.yahoo.bard.webservice.data.config.metric.makers.MetricMaker;
 import com.yahoo.bard.webservice.data.dimension.DimensionDictionary;
 import com.yahoo.bard.webservice.data.metric.MetricDictionary;
-import com.yahoo.bard.webservice.data.time.DefaultTimeGrain;
-import com.yahoo.bard.webservice.druid.model.postaggregation.ArithmeticPostAggregation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,45 +52,20 @@ public class MetricMakerDictionary {
         metricMakers.forEach(maker -> {
 
             try {
-                Class<?> makerClass = Class.forName(maker.getClassPath());
                 DefaultParameterNameDiscoverer discoverer = new DefaultParameterNameDiscoverer();
-                Constructor<?> selectedConstructor = null;
+                Constructor<?> constructor = findConstructor(maker, discoverer);
+                assert constructor != null;
 
-                // find appropriate constructor
-                for (Constructor<?> candidateConstructor : makerClass.getDeclaredConstructors()) {
-                    Class<?>[] pTypes = candidateConstructor.getParameterTypes();
-                    String[] pNames = discoverer.getParameterNames(candidateConstructor);
-                    int index = pTypes.length - 1;
-                    while (index >= 0) {
-                        if ("MetricDictionary".equals(pTypes[index].getSimpleName())
-                                || "DimensionDictionary".equals(pTypes[index].getSimpleName())
-                                || maker.getParams().containsKey(pNames[index])) {
-                            index--;
-                        } else {
-                            break;
-                        }
-                    }
-                    // if all parameters except MetricDictionary and DimensionDictionary
-                    // in this candidate constructor appears in config file, set the selected constructor
-                    // to this candidate constructor
-                    // (have to make sure that constructor with more parameters be checked earlier)
-                    if (index == -1) {
-                        selectedConstructor = candidateConstructor;
-                        break;
-                    }
-                }
-
-                assert selectedConstructor != null;
-                Class<?>[] paramsTypes = selectedConstructor.getParameterTypes();
-                String[] paramsNames = discoverer.getParameterNames(selectedConstructor);
+                Class<?>[] paramsTypes = constructor.getParameterTypes();
+                String[] paramsNames = discoverer.getParameterNames(constructor);
 
                 Object[] args = IntStream.range(0, paramsTypes.length)
-                        .mapToObj(i -> parseParams(paramsTypes[i].getSimpleName(), paramsNames[i], maker))
+                        .mapToObj(i -> parseParams(paramsTypes[i], paramsNames[i], maker))
                         .toArray();
 
-                add(maker.getName(), (MetricMaker) selectedConstructor.newInstance(args));
+                add(maker.getName(), (MetricMaker) constructor.newInstance(args));
 
-            } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
+            } catch (IllegalAccessException | InstantiationException e) {
                 LOG.error("The constructor of maker's class is inaccessible", e);
             } catch (InvocationTargetException e) {
                 LOG.error(e.getCause().getMessage(), e);
@@ -115,7 +88,7 @@ public class MetricMakerDictionary {
      *
      * @return a set of metric makers
      */
-    public Set<MetricMaker> findAll() {
+    public Set<MetricMaker> getAll() {
         return Collections.unmodifiableSet(new HashSet<>(nameToMetricMaker.values()));
     }
 
@@ -177,6 +150,54 @@ public class MetricMakerDictionary {
     }
 
     /**
+     * Find appropriate constructor for a metric maker.
+     *
+     * @param maker a metric maker template instance
+     * @param discoverer Used for finding parameters' names for a constructor
+     * @return the appropriate constructor for this metric maker
+     */
+    private Constructor<?> findConstructor(MetricMakerTemplate maker, DefaultParameterNameDiscoverer discoverer) {
+
+        Class<?> makerClass;
+        Constructor<?> selectedConstructor = null;
+
+        try {
+            makerClass = Class.forName(maker.getFullyQualifiedClassName());
+        } catch (ClassNotFoundException e) {
+            LOG.error("The constructor of maker's class is inaccessible", e);
+            return null;
+        }
+
+        for (Constructor<?> candidateConstructor : makerClass.getDeclaredConstructors()) {
+
+            Class<?>[] pTypes = candidateConstructor.getParameterTypes();
+            String[] pNames = discoverer.getParameterNames(candidateConstructor);
+            int paramsOfConstructor = pTypes.length;
+            int paramsOfMaker = maker.getParams().size();
+
+            while (paramsOfConstructor > 0 && paramsOfMaker >= 0) {
+                if ("MetricDictionary".equals(pTypes[paramsOfConstructor - 1].getSimpleName())
+                        || "DimensionDictionary".equals(pTypes[paramsOfConstructor - 1].getSimpleName())) {
+                    paramsOfConstructor--;
+                } else if (maker.getParams().containsKey(pNames[paramsOfConstructor - 1])) {
+                    paramsOfConstructor--;
+                    paramsOfMaker--;
+                } else {
+                    break;
+                }
+            }
+
+            if (paramsOfConstructor == 0 && paramsOfMaker == 0) {
+                selectedConstructor = candidateConstructor;
+                break;
+            }
+        }
+
+        return selectedConstructor;
+    }
+
+
+    /**
      * Parse parameters for maker's constructor based on parameter's name and type.
      *
      * @param paramType type of the parameter in maker's constructor
@@ -184,30 +205,51 @@ public class MetricMakerDictionary {
      * @param maker     the maker template used to find parameter's value by name
      * @return the value of parameter (can be any type)
      */
-    private Object parseParams(String paramType, String paramName, MetricMakerTemplate maker) {
-        if ("MetricDictionary".equals(paramType)) {
+    private Object parseParams(Class<?> paramType, String paramName, MetricMakerTemplate maker) {
+
+        if ("MetricDictionary".equals(paramType.getSimpleName())) {
             return metricDictionary;
         }
-        if ("DimensionDictionary".equals(paramType)) {
+        if ("DimensionDictionary".equals(paramType.getSimpleName())) {
             return dimensionDictionary;
         }
-        if ("ZonelessTimeGrain".equals(paramType)) {
-            return DefaultTimeGrain.valueOf(maker.getParams().get(paramName));
+
+        Object param = maker.getParams().get(paramName);
+
+        if (paramType.isInstance(param)) {
+            return param;
         }
-        if ("ArithmeticPostAggregationFunction".equals(paramType)) {
-            return ArithmeticPostAggregation
-                    .ArithmeticPostAggregationFunction
-                    .valueOf(maker.getParams().get(paramName));
+
+        if (paramType.isPrimitive())
+        {
+            switch (paramType.getSimpleName()) {
+                case "boolean":
+                    return Boolean.parseBoolean((String) param);
+                case "byte":
+                    return Byte.parseByte((String) param);
+                case "short":
+                    return Short.parseShort((String) param);
+                case "int":
+                    return Integer.parseInt((String) param);
+                case "long":
+                    return Long.parseLong((String) param);
+                case "float":
+                    return Float.parseFloat((String) param);
+                case "double":
+                    return Double.parseDouble((String) param);
+                case "char":
+                    return param;
+            }
         }
-        if ("boolean".equals(paramType)) {
-            return Boolean.parseBoolean(maker.getParams().get(paramName));
+
+        if (paramType.isEnum()) {
+            try {
+                return Enum.valueOf((Class<Enum>) paramType, (String) param);
+            } catch (IllegalArgumentException e) {
+                LOG.error("None enum value " + param + " found in enum class: " + paramType.getSimpleName(), e);
+            }
         }
-        if ("int".equals(paramType)) {
-            return Integer.parseInt(maker.getParams().get(paramName));
-        }
-        if ("double".equals(paramType)) {
-            return Double.parseDouble(maker.getParams().get(paramName));
-        }
+
         return null;
     }
 }
