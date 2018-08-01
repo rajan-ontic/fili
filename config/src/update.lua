@@ -5,21 +5,26 @@ local parser = require("utils.jsonParser")
 local dimension_utils = require("utils.dimensionUtils")
 local metrics_utils = require("utils.metricUtils")
 local table_utils = require("utils.tableUtils")
-local utils = require("utils.utils")
 
 require("dimension")
-local metricConfig = require("metrics")
+require("metrics")
 require("tables")
 
-local dimensionConfig = dimension_utils.add_dimensions(
+local dimensionConfig = dimension_utils.build_dimensions_config(
     DIMENSIONS
 )
 
-local tableConfig = table_utils.add_tables(
-    table_utils.generate_physical_tables(PHYSICALTABLES),
-    table_utils.generate_logical_tables(LOGICALTABLES)
+local metricConfig = metrics_utils.build_metric_config(
+    SIMPLE_MAKERS,
+    COMPLEX_MAKERS,
+    METRICS
+)
+
+local tableConfig = table_utils.build_table_config(
+    PHYSICALTABLES,
+    LOGICALTABLES
 )
 
 parser.save("../external/DimensionConfig.json", dimensionConfig)
-parser.save("../external/MetricConfig.json", metricConfig.update())
+parser.save("../external/MetricConfig.json", metricConfig)
 parser.save("../external/TableConfig.json", tableConfig)

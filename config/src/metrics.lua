@@ -45,18 +45,6 @@ This gives us the (rather silly) formula:
 (LongSum("metric1") + LongSum("metric2")) - LongSum("metric1")
 --]]
 
-local metrics_utils = require("utils.metricUtils")
-local parser = require("utils.jsonParser")
-
-
-local M = {}
-local config = {
-    makers = {},
-    metrics = {}
-}
-
-local maker_dict = {}
-
 -------------------------------------------------------------------------------
 -- Default
 -------------------------------------------------------------------------------
@@ -92,37 +80,48 @@ DEFAULT = {
 -------------------------------------------------------------------------------
 
 -- makerName = {classPath, parameters}
-DEFAULT_MAKERS = {
-    count = {DEFAULT.CLASS_BASE_PATH .. "CountMaker"},
-    constant = {DEFAULT.CLASS_BASE_PATH .. "ConstantMaker"},
-    longSum = {DEFAULT.CLASS_BASE_PATH .. "LongSumMaker"},
-    doubleSum = {DEFAULT.CLASS_BASE_PATH .. "DoubleSumMaker"}
+SIMPLE_MAKERS = {
+    count = {
+        classPath = DEFAULT.CLASS_BASE_PATH .. "CountMaker"
+    },
+    constant = {
+        classPath = DEFAULT.CLASS_BASE_PATH .. "ConstantMaker"
+    },
+    longSum = {
+        classPath = DEFAULT.CLASS_BASE_PATH .. "LongSumMaker"
+    },
+    doubleSum = {
+        classPath = DEFAULT.CLASS_BASE_PATH .. "DoubleSumMaker"
+    }
 }
 
 -- makerName = {classPath, {parameter's name = {parameters, suffix}}}
-COMPLEX_MAKERS = metrics_utils.generate_makers(
-    {
-        arithmetic = {
-            DEFAULT.CLASS_BASE_PATH .. "ArithmeticMaker",
-            {_function = {{"PLUS","MINUS","MULTIPLY","DIVIDE"}, {"PLUS", "MINUS","MULTIPLY","DIVIDE"}}}
-        },
-        aggregateAverage = {
-            DEFAULT.CLASS_BASE_PATH .. "AggregationAverageMaker",
-            {innerGrain = {{"HOUR", "DAY"}, {"byHour", "byDay"}}}
-        },
-        cardinal = {
-            DEFAULT.CLASS_BASE_PATH .. "CardinalityMaker",
-            {byRow = {{"true", "false"}, {"byRow", "byColumn"}}}
-        },
-        ThetaSketch = {
-            DEFAULT.CLASS_BASE_PATH .. "ThetaSketchMaker",
-            {sketchSize= {{"4096", "2048", "1024"}, {"Big", "Medium", "Small"}}}
+COMPLEX_MAKERS = {
+    arithmetic = {
+        classPath = DEFAULT.CLASS_BASE_PATH .. "ArithmeticMaker",
+        params_and_suffix = {
+            _function = {{"PLUS","MINUS","MULTIPLY","DIVIDE"}, {"PLUS", "MINUS","MULTIPLY","DIVIDE"} }
+        }
+    },
+    aggregateAverage = {
+        classPath = DEFAULT.CLASS_BASE_PATH .. "AggregationAverageMaker",
+        params_and_suffix = {
+            innerGrain = {{"HOUR", "DAY"}, {"byHour", "byDay"} }
+        }
+    },
+    cardinal = {
+        classPath = DEFAULT.CLASS_BASE_PATH .. "CardinalityMaker",
+        params_and_suffix = {
+            byRow = {{"true", "false"}, {"byRow", "byColumn"} }
+        }
+    },
+    ThetaSketch = {
+        classPath = DEFAULT.CLASS_BASE_PATH .. "ThetaSketchMaker",
+        params_and_suffix = {
+            sketchSize= {{"4096", "2048", "1024"}, {"Big", "Medium", "Small"} }
         }
     }
-)
-
-metrics_utils.add_makers(DEFAULT_MAKERS, maker_dict)
-metrics_utils.add_makers(COMPLEX_MAKERS, maker_dict)
+}
 
 -------------------------------------------------------------------------------
 -- Metrics
@@ -141,35 +140,116 @@ metrics_utils.add_makers(COMPLEX_MAKERS, maker_dict)
 --]]
 -------------------------------------------------------------------------------
 
--- metric's name = {longName, description, maker, dependency metrics}
-config.metrics = metrics_utils.generate_metrics(
-    {
-        count = {nil, nil, maker_dict.count, nil},
-        added = {nil, nil, maker_dict.doubleSum, {"added"}},
-        delta = {nil, nil, maker_dict.doubleSum, {"delta"}},
-        deleted = {nil, nil, maker_dict.doubleSum, {"deleted"}},
-        averageAddedPerHour = {nil, nil, maker_dict.aggregateAveragebyHour, {"added"}},
-        averageDeletedPerHour = {nil, nil, maker_dict.aggregateAveragebyHour, {"deleted"}},
-        plusAvgAddedDeleted = {nil, nil, maker_dict.arithmeticPLUS, {"averageAddedPerHour", "averageDeletedPerHour"}},
-        MinusAddedDelta = {nil, nil, maker_dict.arithmeticMINUS, {"added", "delta"}},
-        cardOnPage = {nil, nil, maker_dict.cardinalbyRow, {"page"}},
-        bigThetaSketch = {nil, nil, maker_dict.ThetaSketchBig, {"page"}},
-        inlineMakerMetric = {nil, nil, {DEFAULT.CLASS_BASE_PATH .. "ThetaSketchMaker", {sketchSize = "4096"}}, {"page"}},
-        COM = {nil, nil, maker_dict.doubleSum, {"CO"}},
-        NO2M = {nil, nil, maker_dict.doubleSum, {"NO2"}},
-        O3M = {nil, nil, maker_dict.doubleSum, {"O3"}},
-        Temp = {nil, nil, maker_dict.doubleSum, {"Temp"}},
-        relativeHumidity = {nil, nil, maker_dict.doubleSum, {"relativeHumidity"}},
-        absoluteHumidity = {nil, nil, maker_dict.doubleSum, {"absoluteHumidity"}},
-        averageCOPerDay = {nil, nil, maker_dict.aggregateAveragebyDay, {"COM"} }
+METRICS = {
+    count = {
+        longName = nil,
+        desc = nil,
+        maker = "count",
+        dependencies = nil
+    },
+    added = {
+        longName = nil,
+        desc = nil,
+        maker = "doubleSum",
+        dependencies = {"added" }
+    },
+    delta = {
+        longName = nil,
+        desc = nil,
+        maker = "doubleSum",
+        dependencies = {"delta" }
+    },
+    deleted = {
+        longName = nil,
+        desc = nil,
+        maker = "doubleSum",
+        dependencies = {"deleted" }
+    },
+    averageAddedPerHour = {
+        longName = nil,
+        desc = nil,
+        maker = "aggregateAveragebyHour",
+        dependencies = {"added" }
+    },
+    averageDeletedPerHour = {
+        longName = nil,
+        desc = nil,
+        maker = "aggregateAveragebyHour",
+        dependencies = {"deleted" }
+    },
+    plusAvgAddedDeleted = {
+        longName = nil,
+        desc = nil,
+        maker = "arithmeticPLUS",
+        dependencies = {"averageAddedPerHour", "averageDeletedPerHour" }
+    },
+    MinusAddedDelta = {
+        longName = nil,
+        desc = nil,
+        maker = "arithmeticMINUS",
+        dependencies = {"added", "delta" }
+    },
+    cardOnPage = {
+        longName = nil,
+        desc = nil,
+        maker = "cardinalbyRow",
+        dependencies = {"page" }
+    },
+    bigThetaSketch = {
+        longName = nil,
+        desc = nil,
+        maker = "ThetaSketchBig",
+        dependencies = {"page" }
+    },
+    inlineMakerMetric = {
+        longName = nil,
+        desc = nil,
+        maker = {
+            classPath = DEFAULT.CLASS_BASE_PATH .. "ThetaSketchMaker",
+            params = {sketchSize = "4096" }
+        },
+        dependencies = {"page" }
+    },
+    COM = {
+        longName = nil,
+        desc = nil,
+        maker = "doubleSum",
+        dependencies = {"CO" }
+    },
+    NO2M = {
+        longName = nil,
+        desc = nil,
+        maker = "doubleSum",
+        dependencies = {"NO2" }
+    },
+    O3M = {
+        longName = nil,
+        desc = nil,
+        maker = "doubleSum",
+        dependencies = {"O3" }
+    },
+    Temp = {
+        longName = nil,
+        desc = nil,
+        maker = "doubleSum",
+        dependencies = {"Temp" }
+    },
+    relativeHumidity = {
+        longName = nil,
+        desc = nil,
+        maker = "doubleSum",
+        dependencies = {"relativeHumidity" }
+    },
+    absoluteHumidity = {
+        longName = nil,
+        desc = nil,
+        maker = "doubleSum",
+        dependencies = {"absoluteHumidity" }
+    },
+    averageCOPerDay = {
+        longName = nil,
+        desc = nil,
+        maker = "aggregateAveragebyDay",
+        dependencies = {"COM"}
     }
-)
-
-M.update = function()
-    metrics_utils.add_makers(metrics_utils.cache_makers, maker_dict)
-    metrics_utils.clean_cache_makers()
-    metrics_utils.insert_makers_into_table(maker_dict, config.makers)
-    return config
-end
-
-return M
+}

@@ -21,13 +21,9 @@ a list of top-level information about that dimension:
         they desire to use it to organize dimensions.
 ]]
 
--------------------------------------------------------------------------------
--- Default
--------------------------------------------------------------------------------
-
-DEFAULT = {
-    CATEGORY = "General"
-}
+dimensionUtils = require("utils.dimensionUtils")
+local pk = dimensionUtils.pk
+local field = dimensionUtils.field
 
 -------------------------------------------------------------------------------
 -- FieldSets
@@ -78,7 +74,7 @@ DIMENSIONS = {
             longName = "wiki comment",
             desc = "Comment for the edit to the wiki page",
             fields = FIELDSETS.DEFAULT,
-            category = nil
+            category = "General"
         },
         countryIsoCode = {
             longName = "wiki countryIsoCode",
@@ -142,7 +138,7 @@ DIMENSIONS = {
         channel = {
             longName = "wiki channel",
             desc = "Channel is a set of wiki pages on a certain channel",
-            field = FIELDSETS.DEFAULT,
+            fields = FIELDSETS.DEFAULT,
             category = nil
         },
         countryName = {

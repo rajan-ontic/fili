@@ -7,30 +7,6 @@
 local M = {}
 
 -------------------------------------------------------------------------------
--- Dimensions
--------------------------------------------------------------------------------
-
---- Parse a group of config dimensions and add them into a table.
---
--- @param dimensions  A group of dimensions
--- @return The table for storing dimensions
-function M.add_dimensions(dimensions)
-    local t = {}
-    for database, dimension_config in pairs(dimensions) do
-        for name, dimension in pairs(dimension_config) do
-            table.insert(t, {
-                apiName = name,
-                longName = dimension[1] or name,
-                description = dimension[2] or name,
-                fields = dimension[3],
-                category = dimension[4]
-            })
-        end
-    end
-    return t
-end
-
--------------------------------------------------------------------------------
 -- Fields
 -------------------------------------------------------------------------------
 
@@ -38,7 +14,7 @@ end
 --
 -- @param name  the field's name
 -- @return a formatted field with a "primarykey" tag
-function pk(name)
+function M.pk(name)
     return { name = name, tags = { "primaryKey" } }
 end
 
@@ -46,13 +22,39 @@ end
 --
 -- @param ...  a set of fields
 -- @return a set of formatted field without tags
-function field(...)
+function M.field(...)
     local args = { ... }
     local fields = {}
     for index, name in pairs(args) do
         table.insert(fields, { name = name })
     end
     return table.unpack(fields)
+end
+
+-------------------------------------------------------------------------------
+-- Build Config
+-------------------------------------------------------------------------------
+
+--- Parse a group of config dimensions and add them into a table.
+--
+-- @param dimensions  A group of dimensions
+-- @return dimension config, ready for parsing into json
+function M.build_dimensions_config(dimensions)
+    local t = {
+        dimensions = {}
+    }
+    for database, dimension_config in pairs(dimensions) do
+        for name, dimension in pairs(dimension_config) do
+            table.insert(t.dimensions, {
+                apiName = name,
+                longName = dimension.longName,
+                description = dimension.desc,
+                fields = dimension.fields,
+                category = dimension.category,
+            })
+        end
+    end
+    return t
 end
 
 return M
