@@ -14,9 +14,6 @@ import java.util.*;
  * An example:
  * <p>
  *      {
- *          "fieldSets": {
- *              a list of fieldset deserialize by WikiDimensionFieldSetsTemplate
- *          },
  *          "dimensions": [
  *              a list of dimensions deserialize by ikiDimensionTemplate
  *          ]
@@ -25,27 +22,18 @@ import java.util.*;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DefaultExternalDimensionConfigTemplate implements ExternalDimensionConfigTemplate {
 
-    private final Map<String, List<DimensionFieldInfoTemplate>> fieldDictionary;
     private final Set<DimensionTemplate> dimensions;
 
     /**
      * Constructor used by json parser.
      *
-     * @param fieldDictionary json property fieldSets
      * @param dimensions json property dimensions
      */
     @JsonCreator
     public DefaultExternalDimensionConfigTemplate(
-            @JsonProperty("fieldSets") Map<String, List<DimensionFieldInfoTemplate>> fieldDictionary,
             @JsonProperty("dimensions") Set<DimensionTemplate> dimensions
     ) {
-        this.fieldDictionary = fieldDictionary;
         this.dimensions = dimensions;
-    }
-
-    @Override
-    public Map<String, List<DimensionFieldInfoTemplate>> getFieldSets() {
-        return this.fieldDictionary;
     }
 
     @Override

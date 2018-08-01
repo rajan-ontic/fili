@@ -35,7 +35,7 @@ public class DefaultDimensionTemplate implements DimensionTemplate {
     private final String description;
     private final String longName;
     private final String category;
-    private DimensionFieldListTemplate fields;
+    private final List<DimensionFieldInfoTemplate> fieldList;
 
     /**
      * Constructor used by json parser.
@@ -44,7 +44,7 @@ public class DefaultDimensionTemplate implements DimensionTemplate {
      * @param description json property description
      * @param longName json property longName
      * @param category json property category
-     * @param fields json property fields deserialize by DimensionFieldDeserializer
+     * @param fieldList json property fields
      */
     @JsonCreator
     public DefaultDimensionTemplate(
@@ -52,13 +52,13 @@ public class DefaultDimensionTemplate implements DimensionTemplate {
             @JsonProperty("description") String description,
             @JsonProperty("longName") String longName,
             @JsonProperty("category") String category,
-            @JsonProperty("fields") DimensionFieldListTemplate fields
+            @JsonProperty("fields") List<DimensionFieldInfoTemplate> fieldList
     ) {
         this.apiName = apiName;
         this.description = (Objects.isNull(description) ? "" : description);
         this.longName = (Objects.isNull(longName) ? apiName : longName);
         this.category = (Objects.isNull(category) ? Dimension.DEFAULT_CATEGORY : category);
-        this.fields = fields;
+        this.fieldList = fieldList;
     }
 
     /**
@@ -90,27 +90,22 @@ public class DefaultDimensionTemplate implements DimensionTemplate {
     }
 
     @Override
-    public LinkedHashSet<DimensionField> getFields(
-            Map<String, List<DimensionFieldInfoTemplate>> fieldDictionary
-    ) {
-        resolveFields(fieldDictionary);
-        if (this.fields.getFieldList() == null) {
-            return new LinkedHashSet<>();
-        }
-        return this.fields.getFieldList().stream()
+    public LinkedHashSet<DimensionField> getFields() {
+        sortFields(this.fieldList);
+        return this.fieldList.stream()
                 .map(DimensionFieldInfoTemplate::build)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     @Override
-    public DimensionConfig build(Map<String, List<DimensionFieldInfoTemplate>> fieldSet) {
+    public DimensionConfig build() {
         return new DefaultKeyValueStoreDimensionConfig(
                 () -> (getApiName()),
                 getApiName(),
                 getDescription(),
                 getLongName(),
                 getCategory(),
-                getFields(fieldSet),
+                getFields(),
                 getDefaultKeyValueStore(),
                 getDefaultSearchProvider()
         );
@@ -132,47 +127,5 @@ public class DefaultDimensionTemplate implements DimensionTemplate {
      */
     private SearchProvider getDefaultSearchProvider() {
         return ScanSearchProviderManager.getInstance(getApiName());
-    }
-
-    /**
-     * Parse fields info based on dimension's "field" key word.
-     * <p>
-     * If "field list is no empty", use fields in field list
-     * If "no field list" and "field has a name", map name in fieldSetInfo to get a field list
-     * If "no field list" and "no field name", use default field list in fieldSetInfo
-     *
-     * @param fieldDictionary a map from fieldset's name to fieldset
-     */
-    private void resolveFields(
-            Map<String, List<DimensionFieldInfoTemplate>> fieldDictionary
-    ) {
-
-        if (fieldDictionary == null) {
-            return;
-        }
-
-        // if specific fields
-        if (this.fields != null && this.fields.getFieldList() != null) {
-            this.fields.setFieldName("Specific");
-        }
-
-        // default fields
-        else if (this.fields == null || this.fields.getFieldName() == null && this.fields.getFieldList() == null) {
-            this.fields = new DefaultDimensionFieldListTemplate();
-            this.fields.setFieldName("Default");
-            this.fields.setFieldList(fieldDictionary.get("default"));
-        }
-
-        // named fields
-        else if (fieldDictionary.containsKey(this.fields.getFieldName())) {
-            this.fields.setFieldList(fieldDictionary.get(this.fields.getFieldName()));
-        }
-
-        // others -> default
-        else {
-            this.fields = new DefaultDimensionFieldListTemplate();
-            this.fields.setFieldName("Default");
-            this.fields.setFieldList(fieldDictionary.get("default"));
-        }
     }
 }

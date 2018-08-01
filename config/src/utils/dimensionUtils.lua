@@ -13,17 +13,21 @@ local M = {}
 --- Parse a group of config dimensions and add them into a table.
 --
 -- @param dimensions  A group of dimensions
--- @param t  The table for storing dimensions
-function M.add_dimensions(dimensions, t)
-    for name, dimension in pairs(dimensions) do
-        table.insert(t, {
-            apiName = name,
-            longName = dimension[1] or name,
-            description = dimension[2] or name,
-            fields = dimension[3],
-            category = dimension[4]
-        })
+-- @return The table for storing dimensions
+function M.add_dimensions(dimensions)
+    local t = {}
+    for database, dimension_config in pairs(dimensions) do
+        for name, dimension in pairs(dimension_config) do
+            table.insert(t, {
+                apiName = name,
+                longName = dimension[1] or name,
+                description = dimension[2] or name,
+                fields = dimension[3],
+                category = dimension[4]
+            })
+        end
     end
+    return t
 end
 
 -------------------------------------------------------------------------------

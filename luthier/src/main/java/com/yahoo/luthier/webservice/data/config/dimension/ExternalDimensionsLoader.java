@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class ExternalDimensionsLoader {
 
     private final Set<DimensionConfig> dimensionConfigs;
+    private Map<String, DimensionConfig> dimensionConfigMap;
 
     /**
      * Construct the dimension configurations.
@@ -41,11 +42,11 @@ public class ExternalDimensionsLoader {
 
         this.dimensionConfigs = Collections.unmodifiableSet(
                 dimensionConfig.getDimensions().stream()
-                        .map(dimension -> dimension.build(dimensionConfig.getFieldSets()))
+                        .map(DimensionTemplate::build)
                         .collect(Collectors.toSet())
         );
 
-        dimensionConfigs.stream().collect(
+        this.dimensionConfigMap = dimensionConfigs.stream().collect(
                 StreamUtils.toLinkedMap(DimensionConfig::getApiName, Function.identity())
         );
 
@@ -66,10 +67,6 @@ public class ExternalDimensionsLoader {
      * @return a map from dimension name to dimension configurations
      */
     public Map<String, DimensionConfig> getDimensionConfigurations() {
-        Map<String, DimensionConfig> dimensionConfigMap = new HashMap<>();
-        for (DimensionConfig dimensionConfig : dimensionConfigs) {
-            dimensionConfigMap.put(dimensionConfig.getApiName(), dimensionConfig);
-        }
         return dimensionConfigMap;
     }
 
@@ -86,10 +83,6 @@ public class ExternalDimensionsLoader {
                 DefaultDimensionFieldInfoTemplate.class);
         jodaModule.addAbstractTypeMapping(DimensionTemplate.class,
                 DefaultDimensionTemplate.class);
-        jodaModule.addAbstractTypeMapping(DimensionFieldListTemplate.class,
-                DefaultDimensionFieldListTemplate.class);
-        jodaModule.addDeserializer(DefaultDimensionFieldListTemplate.class,
-                DefaultDimensionFieldInfoTemplate.deserializer());
         return jodaModule;
     }
 }

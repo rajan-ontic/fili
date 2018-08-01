@@ -49,7 +49,8 @@ local metrics_utils = require("utils.metricUtils")
 local parser = require("utils.jsonParser")
 
 
-local M = {
+local M = {}
+local config = {
     makers = {},
     metrics = {}
 }
@@ -74,7 +75,7 @@ DEFAULT = {
     and post-aggregations.
 
     Note that some makers are "simple" in that they don't depend on any other
-    Fili metrics, only on a single metric in Druid. For example, the 
+    Fili metrics, only on a single metric in Druid. For example, the
     LongSumMaker is simple, because it depends only on a metric in Druid (which
     it computes the longsum of). Meanwhile, the ArithmeticMaker is "complex"
     because it's computing the sum of two other Fili metrics. For example,
@@ -83,7 +84,7 @@ DEFAULT = {
 
     Makers themselves are define in Java, as a part of your program using
     Fili. Therefore, all references to makers are fully-qualified Java class
-    names. 
+    names.
 
     TODO: Insert documentation describing the structure of makers once we've
     got that finalized.
@@ -133,7 +134,7 @@ metrics_utils.add_makers(COMPLEX_MAKERS, maker_dict)
             to the metric's name.
         longName - A longer, more human friendly name for the metric. Defaults
             to the metric name.
-        description - Short documentation about the metric. Defaults to the 
+        description - Short documentation about the metric. Defaults to the
             metric name
         maker - The maker to use to define the metric.
         dependencies - A list of names of metrics that this metric depends on
@@ -141,7 +142,7 @@ metrics_utils.add_makers(COMPLEX_MAKERS, maker_dict)
 -------------------------------------------------------------------------------
 
 -- metric's name = {longName, description, maker, dependency metrics}
-M.metrics = metrics_utils.generate_metrics(
+config.metrics = metrics_utils.generate_metrics(
     {
         count = {nil, nil, maker_dict.count, nil},
         added = {nil, nil, maker_dict.doubleSum, {"added"}},
@@ -164,10 +165,11 @@ M.metrics = metrics_utils.generate_metrics(
     }
 )
 
-metrics_utils.add_makers(metrics_utils.cache_makers, maker_dict)
-metrics_utils.clean_cache_makers()
-
-metrics_utils.insert_makers_into_table(maker_dict, M.makers)
-parser.save("../external/MetricConfig.json", M)
+M.update = function()
+    metrics_utils.add_makers(metrics_utils.cache_makers, maker_dict)
+    metrics_utils.clean_cache_makers()
+    metrics_utils.insert_makers_into_table(maker_dict, config.makers)
+    return config
+end
 
 return M

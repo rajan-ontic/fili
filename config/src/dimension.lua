@@ -21,13 +21,6 @@ a list of top-level information about that dimension:
         they desire to use it to organize dimensions.
 ]]
 
-local parser = require("utils.jsonParser")
-local dimension_utils = require("utils.dimensionUtils")
-
-local M = {
-    dimensions = {}
-}
-
 -------------------------------------------------------------------------------
 -- Default
 -------------------------------------------------------------------------------
@@ -80,25 +73,182 @@ FIELDSETS = {
 
 -- dimension name = {longName, description, fields, categories}
 DIMENSIONS = {
-    comment = {"wiki comment", "Comment for the edit to the wiki page", FIELDSETS.DEFAULT, nil},
-    countryIsoCode = { "wiki countryIsoCode", "Iso Code of the country to which the wiki page belongs", FIELDSETS.COUNTRY, DEFAULT.CATEGORY },
-    regionIsoCode = { "wiki regionIsoCode", "Iso Code of the region to which the wiki page belongs", FIELDSETS.DEFAULT, nil },
-    page = { "wiki page", "Page is a document that is suitable for World Wide Web and web browsers", FIELDSETS.PAGE, nil },
-    user = { "wiki user", "User is a person who generally use or own wiki services", { pk "ID", field("DESC", "AGE", "SEX") }, nil },
-    isUnpatrolled = {"wiki isUnpatrolled", "Unpatrolled are class of pages that are not been patrolled", FIELDSETS.DEFAULT, nil},
-    isNew = {"wiki isNew", "New Page is the first page that is created in wiki", FIELDSETS.DEFAULT, nil},
-    isRobot = {"wiki isRobot", "Robot is an tool that carries out repetitive and mundane tasks", FIELDSETS.DEFAULT, nil},
-    isAnonymous = {"wiki isAnonymous", "Anonymous are individual or entity whose identity is unknown", FIELDSETS.DEFAULT, nil},
-    isMinor = {"wiki isMinor", "Minor is a person who is legally considered a minor", FIELDSETS.DEFAULT, nil},
-    namespace = {"wiki namespace", "Namespace is a set of wiki pages that begins with a reserved word", FIELDSETS.DEFAULT, nil},
-    channel = {"wiki channel", "Channel is a set of wiki pages on a certain channel", FIELDSETS.DEFAULT, nil},
-    countryName = {"wiki countryName", "Name of the Country to which the wiki page belongs", FIELDSETS.DEFAULT, nil},
-    regionName = {"wiki regionName", "Name of the Region to which the wiki page belongs", FIELDSETS.DEFAULT, nil},
-    metroCode = {"wiki metroCode", "Metro Code to which the wiki page belongs", FIELDSETS.DEFAULT, nil},
-    cityName = {"wiki cityName", "Name of the City to which the wiki page belongs", FIELDSETS.DEFAULT, nil}
+    wikipedia = {
+        comment = {
+            longName = "wiki comment",
+            desc = "Comment for the edit to the wiki page",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        countryIsoCode = {
+            longName = "wiki countryIsoCode",
+            desc = "Iso Code of the country to which the wiki page belongs",
+            fields = FIELDSETS.COUNTRY,
+            category = "General"
+        },
+        regionIsoCode = {
+            longName = "wiki regionIsoCode",
+            desc = "Iso Code of the region to which the wiki page belongs",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        page = {
+            longName = "wiki page",
+            desc = "Page is a document that is suitable for World Wide Web and web browsers",
+            fields = FIELDSETS.PAGE,
+            category = nil
+        },
+        user = {
+            longName = "wiki user",
+            desc = "User is a person who generally use or own wiki services",
+            fields = { pk "ID", field("DESC", "AGE", "SEX") },
+            category = nil
+        },
+        isUnpatrolled = {
+            longName = "wiki isUnpatrolled",
+            desc = "Unpatrolled are class of pages that are not been patrolled",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        isNew = {
+            longName = "wiki isNew",
+            desc = "New Page is the first page that is created in wiki",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        isRobot = {
+            longName = "wiki isRobot",
+            desc = "Robot is an tool that carries out repetitive and mundane tasks",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        isAnonymous = {
+            longName = "wiki isAnonymous",
+            desc = "Anonymous are individual or entity whose identity is unknown",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        isMinor = {
+            longName = "wiki isMinor",
+            desc = "Minor is a person who is legally considered a minor",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        namespace = {
+            longName = "wiki namespace",
+            desc = "Namespace is a set of wiki pages that begins with a reserved word",
+            fields = FIELDSETS.DEFAULT,
+            category = nil},
+        channel = {
+            longName = "wiki channel",
+            desc = "Channel is a set of wiki pages on a certain channel",
+            field = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        countryName = {
+            longName = "wiki countryName",
+            desc = "Name of the Country to which the wiki page belongs",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        regionName = {
+            longName = "wiki regionName",
+            desc = "Name of the Region to which the wiki page belongs",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        metroCode = {
+            longName = "wiki metroCode",
+            desc = "Metro Code to which the wiki page belongs",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        cityName = {
+            longName = "wiki cityName",
+            desc = "Name of the City to which the wiki page belongs",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        }
+    },
+    air_quality = {
+        ["PT08.S2(NMHC)"] = {
+            longName = "PT08.S2(NMHC)",
+            desc = "PT08.S2(NMHC)",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        ["PT08.S4(NO2)"] = {
+            longName = "PT08.S4(NO2)",
+            desc = "PT08.S4(NO2)",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        ["PT08.S4(NO2)"] = {
+            longName = "NO2(GT)",
+            desc = "NO2(GT)",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        ["C6H6(GT)"] = {
+            longName = "C6H6(GT)",
+            desc = "C6H6(GT)",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        ["PT08.S1(CO)"] = {
+            longName = "PT08.S1(CO)",
+            desc = "PT08.S1(CO)",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        ["NOx(GT)"] = {
+            longName = "NOx(GT)",
+            desc = "NOx(GT)",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        RH = {
+            longName = "RH",
+            desc = "RH",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        AH = {
+            longName = "AH",
+            desc = "AH",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        ["NMHC(GT)"] = {
+            longName = "NMHC(GT)",
+            desc = "NMHC(GT)",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        T = {
+            longName = "T",
+            desc = "T",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        ["PT08.S3(NOx)"] = {
+            longName = "PT08.S3(NOx)",
+            desc = "PT08.S3(NOx)",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        ["PT08.S5(O3)"] = {
+            longName = "PT08.S5(O3)",
+            desc = "PT08.S5(O3)",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+        ["CO(GT)"] = {
+            longName = "CO(GT)",
+            desc = "CO(GT)",
+            fields = FIELDSETS.DEFAULT,
+            category = nil
+        },
+    }
 }
 
-dimension_utils.add_dimensions(DIMENSIONS, M.dimensions)
-parser.save("../external/DimensionConfig.json", M)
-
-return M
