@@ -15,6 +15,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.lang.reflect.Constructor
+import java.util.function.BiFunction
 
 class MetricServletSpec extends Specification{
 
@@ -66,6 +67,7 @@ class MetricServletSpec extends Specification{
 
         expect: "constructor's parameters matchs maker's parameters"
         for (maker in metricConfig.getMakers()) {
+            Map<Class, BiFunction<Class, Object, ?>> paramMapper = metricMakerDictionary.buildParamMappers()
             Constructor<?> constructor = metricMakerDictionary.findConstructor(maker, discoverer)
             Class<?>[] pTypes = constructor.getParameterTypes()
             String[] pNames = discoverer.getParameterNames(constructor)
@@ -78,7 +80,7 @@ class MetricServletSpec extends Specification{
                 assert maker.getParams().containsKey(pNames[i])
                 index++
                 if (!pTypes[i].isPrimitive()) {
-                    Object param = metricMakerDictionary.parseParams(pTypes[i], pNames[i], maker)
+                    Object param = metricMakerDictionary.parseParams(pTypes[i], pNames[i], maker, paramMapper)
                     assert pTypes[i].isInstance(param)
                 }
             }

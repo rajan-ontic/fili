@@ -8,6 +8,7 @@ import com.yahoo.bard.webservice.data.dimension.DimensionDictionary;
 import com.yahoo.bard.webservice.data.metric.MetricDictionary;
 
 import com.yahoo.bard.webservice.data.time.DefaultTimeGrain;
+import com.yahoo.bard.webservice.data.time.ZonelessTimeGrain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.DefaultParameterNameDiscoverer;
@@ -15,6 +16,7 @@ import org.springframework.core.DefaultParameterNameDiscoverer;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 
 /**
@@ -57,6 +59,8 @@ public class MetricMakerDictionary {
         this.metricDictionary = metricDictionary;
         this.dimensionDictionary = dimensionDictionary;
 
+        Map<Class, BiFunction<Class, Object, ?>> paramMapper = buildParamMappers();
+
         metricMakers.forEach(maker -> {
 
             try {
@@ -68,7 +72,7 @@ public class MetricMakerDictionary {
                 String[] paramsNames = discoverer.getParameterNames(constructor);
 
                 Object[] args = IntStream.range(0, paramsTypes.length)
-                        .mapToObj(i -> parseParams(paramsTypes[i], paramsNames[i], maker))
+                        .mapToObj(i -> parseParams(paramsTypes[i], paramsNames[i], maker, paramMapper))
                         .toArray();
 
                 add(maker.getName(), (MetricMaker) constructor.newInstance(args));
@@ -205,61 +209,54 @@ public class MetricMakerDictionary {
     }
 
     /**
+     * Build up paramMapper, map parameter's type to a function that calculate the value of this parameter.
+     *
+     * @return a map from class type to function
+     */
+    private Map<Class, BiFunction<Class, Object, ?>> buildParamMappers() {
+
+        Map<Class, BiFunction<Class, Object, ?>> paramMapper = new HashMap<>();
+        paramMapper.put(boolean.class, (x, y) -> Boolean.parseBoolean((String) y));
+        paramMapper.put(byte.class, (x, y) -> Byte.parseByte((String) y));
+        paramMapper.put(short.class, (x, y) -> Short.parseShort((String) y));
+        paramMapper.put(int.class, (x, y) -> Integer.parseInt((String) y));
+        paramMapper.put(long.class, (x, y) -> Long.parseLong((String) y));
+        paramMapper.put(float.class, (x, y) -> Float.parseFloat((String) y));
+        paramMapper.put(double.class, (x, y) -> Double.parseDouble((String) y));
+        paramMapper.put(char.class, (x, y) -> y);
+        paramMapper.put(ZonelessTimeGrain.class, (x, y) -> DefaultTimeGrain.valueOf((String) y));
+        paramMapper.put(MetricDictionary.class, (x, y) -> metricDictionary);
+        paramMapper.put(DimensionDictionary.class, (x, y) -> dimensionDictionary);
+        paramMapper.put(Enum.class, (x, y) -> Enum.valueOf((Class<Enum>) x, (String) y));
+
+        return paramMapper;
+    }
+
+    /**
      * Parse parameters for maker's constructor based on parameter's name and type.
      *
      * @param paramType type of the parameter in maker's constructor
      * @param paramName name of the parameter in maker's constructor
      * @param maker the maker template used to find parameter's value by name
+     * @param paramMapper a map from parameter's type to a function that calculate the value of this parameter
      * @return the value of parameter (can be any type)
      *
-     * Todo: Not a good implementation now but can work, use other strategy such as binding map instead
      */
-    private Object parseParams(Class<?> paramType, String paramName, MetricMakerTemplate maker) {
+    private Object parseParams(Class<?> paramType,
+                               String paramName,
+                               MetricMakerTemplate maker,
+                               Map<Class, BiFunction<Class, Object, ?>> paramMapper) {
 
         Object param = maker.getParams().get(paramName);
-
-        if ("MetricDictionary".equals(paramType.getSimpleName())) {
-            return metricDictionary;
-        }
-        if ("DimensionDictionary".equals(paramType.getSimpleName())) {
-            return dimensionDictionary;
-        }
-        if ("ZonelessTimeGrain".equals(paramType.getSimpleName())) {
-            return DefaultTimeGrain.valueOf((String) param);
-        }
 
         if (paramType.isInstance(param)) {
             return param;
         }
 
-        if (paramType.isPrimitive())
-        {
-            switch (paramType.getSimpleName()) {
-                case "boolean":
-                    return Boolean.parseBoolean((String) param);
-                case "byte":
-                    return Byte.parseByte((String) param);
-                case "short":
-                    return Short.parseShort((String) param);
-                case "int":
-                    return Integer.parseInt((String) param);
-                case "long":
-                    return Long.parseLong((String) param);
-                case "float":
-                    return Float.parseFloat((String) param);
-                case "double":
-                    return Double.parseDouble((String) param);
-                case "char":
-                    return param;
-            }
-        }
-
-        if (paramType.isEnum()) {
-            try {
-                return Enum.valueOf((Class<Enum>) paramType, (String) param);
-            } catch (IllegalArgumentException e) {
-                LOG.error("None enum value " + param + " found in enum class: " + paramType.getSimpleName(), e);
-            }
+        if (paramMapper.containsKey(paramType)) {
+            return paramMapper.get(paramType).apply(paramType, param);
+        } else if (paramType.isEnum()) {
+            return paramMapper.get(Enum.class).apply(paramType, param);
         }
 
         return null;
