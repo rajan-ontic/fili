@@ -30,7 +30,6 @@ METRICS = {
  sum = {nil, nil, maker_dict.arithmeticPLUS, {"metric1", "metric2"}
 }
 
-
 Naturally of course these can be nested like any formula. So we could add
 the following to METRICS above:
 
@@ -165,51 +164,6 @@ METRICS = {
         maker = "doubleSum",
         dependencies = {"deleted" }
     },
-    averageAddedPerHour = {
-        longName = nil,
-        desc = nil,
-        maker = "aggregateAveragebyHour",
-        dependencies = {"added" }
-    },
-    averageDeletedPerHour = {
-        longName = nil,
-        desc = nil,
-        maker = "aggregateAveragebyHour",
-        dependencies = {"deleted" }
-    },
-    plusAvgAddedDeleted = {
-        longName = nil,
-        desc = nil,
-        maker = "arithmeticPLUS",
-        dependencies = {"averageAddedPerHour", "averageDeletedPerHour" }
-    },
-    MinusAddedDelta = {
-        longName = nil,
-        desc = nil,
-        maker = "arithmeticMINUS",
-        dependencies = {"added", "delta" }
-    },
-    cardOnPage = {
-        longName = nil,
-        desc = nil,
-        maker = "cardinalbyRow",
-        dependencies = {"page" }
-    },
-    bigThetaSketch = {
-        longName = nil,
-        desc = nil,
-        maker = "ThetaSketchBig",
-        dependencies = {"page" }
-    },
-    inlineMakerMetric = {
-        longName = nil,
-        desc = nil,
-        maker = {
-            classPath = DEFAULT.CLASS_BASE_PATH .. "ThetaSketchMaker",
-            params = {sketchSize = "4096" }
-        },
-        dependencies = {"page" }
-    },
     COM = {
         longName = nil,
         desc = nil,
@@ -222,34 +176,16 @@ METRICS = {
         maker = "doubleSum",
         dependencies = {"NO2" }
     },
-    O3M = {
-        longName = nil,
-        desc = nil,
-        maker = "doubleSum",
-        dependencies = {"O3" }
-    },
-    Temp = {
-        longName = nil,
-        desc = nil,
-        maker = "doubleSum",
-        dependencies = {"Temp" }
-    },
-    relativeHumidity = {
-        longName = nil,
-        desc = nil,
-        maker = "doubleSum",
-        dependencies = {"relativeHumidity" }
-    },
-    absoluteHumidity = {
-        longName = nil,
-        desc = nil,
-        maker = "doubleSum",
-        dependencies = {"absoluteHumidity" }
-    },
     averageCOPerDay = {
         longName = nil,
         desc = nil,
         maker = "aggregateAveragebyDay",
         dependencies = {"COM"}
+    },
+    averageNO2PerDay = {
+        longName = nil,
+        desc = nil,
+        maker = "aggregateAveragebyDay",
+        dependencies = {"NO2M"}
     }
 }

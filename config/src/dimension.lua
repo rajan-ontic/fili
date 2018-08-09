@@ -7,18 +7,6 @@ metrics. For example, with dimensions we don't just know how many "pageViews"
 our website has had. We can also partition "pageViews" into the number of men
 who've seen our pages, the number of women, and the number of people whose
 gender is unknown.
-
-Dimensions are defined in a table DIMENSIONS that maps dimension names to 
-a list of top-level information about that dimension:
-    {longName, description, fields, categories}
-
-    * longName - A longer human friendly name for the dimension
-    * description - Brief documentation about the dimension
-    * fields - A fieldset (see FieldSets below) describing the fields attached
-        to the dimension
-    * categories - An arbitrary category to put the dimension in. This is not
-        used directly by Fili, but rather exists as a marker for UI's should
-        they desire to use it to organize dimensions.
 ]]
 
 dimensionUtils = require("utils.dimensionUtils")
@@ -56,7 +44,6 @@ local field = dimensionUtils.field
 ]]
 -------------------------------------------------------------------------------
 
--- fieldSet name = {pk(field as primary key), f(other fields)}
 FIELDSETS = {
     DEFAULT = { pk "ID", field "DESC" },
     COUNTRY = { pk "ID", field ("DESC", "COUNTY", "STATE")},
@@ -65,9 +52,20 @@ FIELDSETS = {
 
 -------------------------------------------------------------------------------
 -- Dimensions
+--[[
+    Dimensions are defined in a table DIMENSIONS that maps dimension names to
+    a dictionary of top-level information about that dimension:
+
+    * longName - A longer human friendly name for the dimension
+    * description - Brief documentation about the dimension
+    * fields - A fieldset (see FieldSets below) describing the fields attached
+    to the dimension
+    * categories - An arbitrary category to put the dimension in. This is not
+    used directly by Fili, but rather exists as a marker for UI's should
+    they desire to use it to organize dimensions.
+]]
 -------------------------------------------------------------------------------
 
--- dimension name = {longName, description, fields, categories}
 DIMENSIONS = {
     wikipedia = {
         comment = {
