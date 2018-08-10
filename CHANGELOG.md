@@ -7,7 +7,11 @@ pull request if there was one.
 
 ### Added:
 
--- [An injection point for customizing the WebLoggingFilter to use during tests](https://github.com/yahoo/fili/pull/749)
+- [Add support for 'single' ShardSpec](https://github.com/yahoo/fili/issues/758)
+    * Split `IdOnlyShardSpec` from `NumberedShardSpec`, reduced `SegmentInfo` to `IdOnlyShardSpec`
+    * Added test for "single" type `ShardSpec` and added binding code to `ShardSpecMixIn`
+
+- [An injection point for customizing the WebLoggingFilter to use during tests](https://github.com/yahoo/fili/pull/749)
     * Extend `JerseyTestBinder` and override `getLoggingFilter`.
 
 - [An injection point for customizing Exception handling]https://github.com/yahoo/fili/pull/742)

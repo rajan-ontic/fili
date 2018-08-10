@@ -2,6 +2,7 @@
 // Licensed under the terms of the Apache license. Please see LICENSE.md file distributed with this work for terms.
 package com.yahoo.bard.webservice.metadata;
 
+import com.yahoo.bard.webservice.druid.model.metadata.IdOnlyShardSpec;
 import com.yahoo.bard.webservice.druid.model.metadata.NumberedShardSpec;
 
 import org.joda.time.Interval;
@@ -24,7 +25,7 @@ public class SegmentInfo {
     private final List<String> dimensions;
     private final List<String> metrics;
     private final String version;
-    private final NumberedShardSpec shardSpec;
+    private final IdOnlyShardSpec shardSpec;
     private final long size;
     private final String identifier;
 
@@ -40,9 +41,11 @@ public class SegmentInfo {
         this.metrics = segment.getMetrics();
         this.version = segment.getVersion();
         ShardSpec spec = segment.getShardSpec();
-        this.shardSpec = spec instanceof NumberedShardSpec ?
-                (NumberedShardSpec) spec :
-                new NumberedShardSpec((NoneShardSpec) spec);
+
+        this.shardSpec = spec instanceof NoneShardSpec ?
+                new NumberedShardSpec((NoneShardSpec) spec) :
+                (IdOnlyShardSpec) spec;
+
         this.size = segment.getSize();
         this.identifier = segment.getIdentifier();
     }
@@ -109,7 +112,7 @@ public class SegmentInfo {
      *
      * @return The shard spec.
      */
-    public NumberedShardSpec getShardSpec() {
+    public IdOnlyShardSpec getShardSpec() {
         return shardSpec;
     }
 

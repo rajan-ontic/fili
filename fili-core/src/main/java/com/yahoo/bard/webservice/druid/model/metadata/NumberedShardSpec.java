@@ -6,24 +6,14 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import org.apache.commons.lang3.NotImplementedException;
-
-import io.druid.data.input.InputRow;
 import io.druid.timeline.partition.NoneShardSpec;
-import io.druid.timeline.partition.PartitionChunk;
-import io.druid.timeline.partition.ShardSpec;
-import io.druid.timeline.partition.ShardSpecLookup;
-
-import java.util.List;
 
 /**
  * NumberedShardSpec class. Reflects the current shardspec type that is used in druid datasource metadata endpoints.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class NumberedShardSpec implements ShardSpec {
+public class NumberedShardSpec extends IdOnlyShardSpec {
 
-    private final String type;
-    private final int partitionNum;
     private final int partitions;
 
     /**
@@ -39,8 +29,7 @@ public class NumberedShardSpec implements ShardSpec {
             @JsonProperty("partitionNum") int partitionNum,
             @JsonProperty("partitions") int partitions
     ) {
-        this.type = type;
-        this.partitionNum = partitionNum;
+        super(type, partitionNum);
         this.partitions = partitions;
     }
 
@@ -52,43 +41,8 @@ public class NumberedShardSpec implements ShardSpec {
      * @param spec  The spec corresponding to unsharded segment.
      */
     public NumberedShardSpec(NoneShardSpec spec) {
-        this.type = "none";
-        this.partitionNum = spec.getPartitionNum();
-        this.partitions = this.partitionNum + 1;
-    }
-
-    /**
-     * Getter for type.
-     *
-     * @return type  The type of this shard spec.
-     */
-    public String getType() {
-        return this.type;
-    }
-
-    @Override
-    public <T> PartitionChunk<T> createChunk(T obj) {
-        throw new NotImplementedException("createChunk method is not implemented");
-    }
-
-    @Override
-    public boolean isInChunk(long timestamp, InputRow inputRow) {
-        throw new NotImplementedException("isInChunk method is not implemented");
-    }
-
-    /**
-     * Getter for partition number.
-     *
-     * @return The partition number of this shard spec.
-     */
-    @Override
-    public int getPartitionNum() {
-        return partitionNum;
-    }
-
-    @Override
-    public ShardSpecLookup getLookup(List<ShardSpec> shardSpecs) {
-        throw new NotImplementedException("getLookup method is not implemented");
+        super("none", spec.getPartitionNum());
+        this.partitions = spec.getPartitionNum() + 1;
     }
 
     /**

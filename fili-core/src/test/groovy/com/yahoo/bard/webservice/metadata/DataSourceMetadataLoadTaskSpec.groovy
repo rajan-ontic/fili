@@ -101,7 +101,9 @@ class DataSourceMetadataLoadTaskSpec extends BaseDataSourceMetadataSpec {
                                generateSegment(tableName, interval3, versions.version1, dimensions.keySet().join(','), metrics123.join(','), 0, 2, binaryVersions.binaryVersion1, sizes.size1),
                                generateSegment(tableName, interval3, versions.version2, dimensions.keySet().join(','), metrics123.join(','), 1, 2, binaryVersions.binaryVersion1, sizes.size2),
                                generateSegment_9_1(tableName, interval3, versions.version2, dimensions.keySet().join(','), metrics123.join(','), 0, 2, [], binaryVersions.binaryVersion1, sizes.size2),
-                               generateSegment_9_1(tableName, interval3, versions.version2, dimensions.keySet().join(','), metrics123.join(','), 1, 2, quotedDimensions, binaryVersions.binaryVersion1, sizes.size2)
+                               generateSegment_9_1(tableName, interval3, versions.version2, dimensions.keySet().join(','), metrics123.join(','), 1, 2, quotedDimensions, binaryVersions.binaryVersion1, sizes.size2),
+                               generateSegment_single(tableName, interval3, versions.version2, dimensions.keySet().join(','), metrics123.join(','), 1, "", binaryVersions.binaryVersion1, sizes.size2)
+                        
                            ].join(',')}
                        ]
                 }"""
@@ -119,7 +121,8 @@ class DataSourceMetadataLoadTaskSpec extends BaseDataSourceMetadataSpec {
                               generateSegment(tableName, interval3, versions.version1, dimensions.keySet().join(','), metrics123.join(','), 0, 2, binaryVersions.binaryVersion1, sizes.size1),
                               generateSegment(tableName, interval3, versions.version2, dimensions.keySet().join(','), metrics123.join(','), 1, 2, binaryVersions.binaryVersion1, sizes.size2),
                               generateSegment_9_1(tableName, interval3, versions.version1, dimensions.keySet().join(','), metrics123.join(','), 0, 2, [], binaryVersions.binaryVersion1, sizes.size1),
-                              generateSegment_9_1(tableName, interval3, versions.version2, dimensions.keySet().join(','), metrics123.join(','), 1, 2, quotedDimensions, binaryVersions.binaryVersion1, sizes.size2)
+                              generateSegment_9_1(tableName, interval3, versions.version2, dimensions.keySet().join(','), metrics123.join(','), 1, 2, quotedDimensions, binaryVersions.binaryVersion1, sizes.size2),
+                              generateSegment_single(tableName, interval3, versions.version2, dimensions.keySet().join(','), metrics123.join(','), 1, "", binaryVersions.binaryVersion1, sizes.size2)
                           ].join(',')}
                       ]
                 }"""
@@ -251,6 +254,27 @@ class DataSourceMetadataLoadTaskSpec extends BaseDataSourceMetadataSpec {
                             "partitionNum": $partitionNum,
                             "partitions": $partitions,
                             "partitionDimensions" : $partitionDimensions
+                        },
+                        "binaryVersion": $binVersion,
+                        "size": $size,
+                        "identifier": ""
+        }"""
+    }
+
+    def generateSegment_single(tableName, interval, version, dimensions, metrics, partitionNum, String shardDimension, binVersion, size) {
+        return """{
+                        "dataSource": "$tableName",
+                        "interval": "$interval",
+                        "version": "$version",
+                        "loadSpec": { },
+                        "dimensions": "$dimensions",
+                        "metrics": "$metrics",
+                        "shardSpec": {
+                            "type": "single",
+                            "partitionNum": $partitionNum,
+                            "dimension": "$shardDimension",
+                            "start": "4",
+                            "end": null
                         },
                         "binaryVersion": $binVersion,
                         "size": $size,
