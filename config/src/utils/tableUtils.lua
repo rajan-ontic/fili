@@ -6,41 +6,7 @@
 
 local M = {}
 
--------------------------------------------------------------------------------
--- Physical and Logical Tables
--------------------------------------------------------------------------------
-
---- Generate a list of dimension name from dimension config
---
--- @param dimensions  A list of dimension config
--- @return A list of dimension name
-local function _generate_dimensions(dimensions)
-    local t = {}
-    for name, dimension in pairs(dimensions) do
-        table.insert(t, name)
-    end
-    return t
-end
-
---- Parse a group of physical tables configs
---
--- @param tables  A group of physical tables
-local function _generate_physical_tables(tables)
-    for name, physical_table in pairs(tables) do
-        physical_table.dimensions = _generate_dimensions(physical_table.dimensions)
-    end
-    return tables
-end
-
---- Parse a group of logical tables configs
---
--- @param tables  A group of logical tables
-local function _generate_logical_tables(tables)
-    for name, logical_table in pairs(tables) do
-        logical_table.dimensions = _generate_dimensions(logical_table.dimensions)
-    end
-    return tables
-end
+local misc = require 'util/misc'
 
 -------------------------------------------------------------------------------
 -- Build Config
@@ -48,37 +14,30 @@ end
 
 --- Add physical table configs and logical table configs into table t.
 --
--- @param physical_table A group of physical table config
--- @param logical_table A group of logical table config
+-- @param tables A table containing two keys: 
+--  physical - A table of physical table configuration, keyed on name
+--  logical - A table of logical table configuration, keyed on name
 -- @return The table for storing table configs and ready be parsed into json
-function M.build_table_config(physical_table, logical_table)
+function M.build_table_config(tables)
 
-    local t = {
-        physicalTables = {},
-        logicalTables = {}
+    local configuration = {
+        physical = {},
+        logical = {}
     }
 
-    for name, physical_table in pairs(_generate_physical_tables(physical_table)) do
-        table.insert(t.physicalTables, {
-            name = name,
-            description = physical_table.desc,
-            metrics = physical_table.metrics,
-            dimensions = physical_table.dimensions,
-            granularity = physical_table.granularity
-        })
+    for name, physical_table in pairs(tables.physical) do
+        local copy = misc.shallow_copy(physical_table)
+        copy.name = copy.name or name
+        copy.description = copy.description or name
+        table.insert(configuration.physical, copy)
     end
 
-    for name, logical_table in pairs(_generate_logical_tables(logical_table)) do
-        table.insert(t.logicalTables, {
-            name = name,
-            description = logical_table.desc,
-            apiMetricNames = logical_table.metrics,
-            dimensions = logical_table.dimensions,
-            granularity = logical_table.granularity,
-            physicalTables = logical_table.physicaltable
-        })
+    for name, logical_table in pairs(tables.logical) do
+        local copy = misc.shallow_copy(logical_table)
+        copy.name = copy.name or name
+        copy.description = copy.description or name
+        table.insert(configuration.logical, copy)
     end
-
     return t
 end
 

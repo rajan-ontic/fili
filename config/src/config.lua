@@ -23,8 +23,8 @@ local dimensions = require("dimensions")
 local metrics = require("metrics")
 --[[
 -- tables returns a table containing two keys:
---  physicaltables - A table of physical table configuration keyed on name
---  logicaltable - A table of logical table configuration keyed on name
+--  physical - A table of physical table configuration keyed on name
+--  logical - A table of logical table configuration keyed on name
 --]]
 local tables = require("tables")
 
